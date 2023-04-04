@@ -17,8 +17,14 @@ impl ConfigSetting {
 
         subtype.to_string()
     }
+}
 
-    pub fn try_unwrap_integer(&self) -> Result<isize, ConfigError> {
+pub trait TryUnwrap<T> {
+    fn try_unwrap(&self) -> Result<T, ConfigError>;
+}
+
+impl TryUnwrap<isize> for ConfigSetting {
+    fn try_unwrap(&self) -> Result<isize, ConfigError> {
         match self {
             Self::Integer(i) => Ok(*i),
             _ => Err(ConfigError::TypeMismatch {
@@ -27,8 +33,10 @@ impl ConfigSetting {
             }),
         }
     }
+}
 
-    pub fn try_unwrap_text(&self) -> Result<String, ConfigError> {
+impl TryUnwrap<String> for ConfigSetting {
+    fn try_unwrap(&self) -> Result<String, ConfigError> {
         match self {
             Self::Text(t) => Ok(t.to_string()),
             _ => Err(ConfigError::TypeMismatch {
@@ -37,8 +45,10 @@ impl ConfigSetting {
             }),
         }
     }
+}
 
-    pub fn try_unwrap_bool(&self) -> Result<bool, ConfigError> {
+impl TryUnwrap<bool> for ConfigSetting {
+    fn try_unwrap(&self) -> Result<bool, ConfigError> {
         match self {
             Self::Boolean(b) => Ok(*b),
             _ => Err(ConfigError::TypeMismatch {

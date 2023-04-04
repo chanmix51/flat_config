@@ -1,15 +1,42 @@
 use std::path::PathBuf;
 
 use flat_config::{
+    config_setting::TryUnwrap,
     error::ConfigError,
     setting_pool::{ConfigBuilder, ConfigSettingPool},
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum VerboseLevel {
+    Critical = 0,
+    Error,
+    Warning,
+    Info,
+    Debug,
+}
+
+impl TryFrom<isize> for VerboseLevel {
+    type Error = ConfigError;
+
+    fn try_from(value: isize) -> Result<Self, <Self as TryFrom<isize>>::Error> {
+        match value {
+            0 => Ok(Self::Critical),
+            1 => Ok(Self::Error),
+            2 => Ok(Self::Warning),
+            3 => Ok(Self::Info),
+            4 => Ok(Self::Debug),
+            v => Err(ConfigError::IncorrectValue(format!(
+                "Incorrect value {v} for type VerboseLevel (1 → 5)"
+            ))),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 struct AppConfiguration {
-    environment: String,
+    app_name: String,
     database_dir: PathBuf,
-    verbose_level: usize,
+    verbose_level: VerboseLevel,
     dry_run: bool,
 }
 
@@ -18,24 +45,19 @@ struct AppConfigBuilder;
 
 impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
     fn build(&self, config_pool: &ConfigSettingPool) -> Result<AppConfiguration, ConfigError> {
-        let environment = config_pool.require("environment")?.try_unwrap_text()?;
-        let database_dir = config_pool.require("database_dir")?.try_unwrap_text()?;
+        // Application name has been already checked for existence and consistency
+        let app_name = config_pool.unwrap("app_name").try_unwrap()?;
+
+        let database_dir: String = config_pool.require("database_dir")?.try_unwrap()?;
         let database_dir = PathBuf::new().join(database_dir);
 
-        let verbose_level = config_pool
-            .get_or("verbose_level", 0.into())
-            .try_unwrap_integer()?;
-        let verbose_level = usize::try_from(verbose_level).map_err(|e| {
-            ConfigError::IncorrectValue(format!(
-                "Verbose level ({verbose_level}) could notbe converted to usize. Error: {e}"
-            ))
-        })?;
-        let dry_run = config_pool
-            .get_or("dry_run", false.into())
-            .try_unwrap_bool()?;
+        let verbose_level: isize = config_pool.get_or("verbose_level", 0.into()).try_unwrap()?;
+        let verbose_level = VerboseLevel::try_from(verbose_level)?;
+
+        let dry_run = config_pool.get_or("dry_run", false.into()).try_unwrap()?;
 
         let config = AppConfiguration {
-            environment,
+            app_name,
             database_dir: PathBuf::new().join(database_dir),
             verbose_level,
             dry_run,
@@ -48,7 +70,8 @@ impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
 #[test]
 fn build() {
     let mut pool = ConfigSettingPool::default();
-    pool.add("environment", "production".into())
+    pool.add("whatever", "something".into())
+        .add("app_name", "Application".into())
         .add("database_dir", "/var/database".into())
         .add("verbose_level", 2.into())
         .add("dry_run", true.into());
@@ -57,12 +80,12 @@ fn build() {
         .map_err(|e| format!("{e}"))
         .unwrap();
 
-    assert_eq!("production".to_string(), config.environment);
+    assert_eq!("Application".to_string(), config.app_name);
     assert_eq!(
         "/var/database".to_string(),
         config.database_dir.display().to_string()
     );
-    assert_eq!(2, config.verbose_level);
+    assert_eq!(VerboseLevel::Warning, config.verbose_level);
     assert!(config.dry_run);
 }
 
@@ -70,25 +93,33 @@ fn build() {
 #[should_panic]
 fn require() {
     let mut pool = ConfigSettingPool::default();
-    pool.add("environment", "production".into())
-        .add("verbose_level", 2.into())
+    pool.add("verbose_level", 2.into())
+        .add("app_name", "Application".into())
         .add("dry_run", true.into());
-    let _config = AppConfigBuilder::default()
-        .build(&pool)
-        .map_err(|e| format!("{e}"))
-        .unwrap();
+    let _config = AppConfigBuilder::default().build(&pool).unwrap();
+}
+
+#[test]
+#[should_panic]
+fn unwrap() {
+    let mut pool = ConfigSettingPool::default();
+    pool.add("verbose_level", 2.into())
+        .add("database_dir", "/var/database".into())
+        .add("dry_run", true.into());
+    let _config = AppConfigBuilder::default().build(&pool);
 }
 
 #[test]
 fn default() {
     let mut pool = ConfigSettingPool::default();
-    pool.add("environment", "production".into())
+    pool.add("whatever", "something".into())
+        .add("app_name", "Application".into())
         .add("database_dir", "/var/database".into());
     let config = AppConfigBuilder::default()
         .build(&pool)
         .map_err(|e| format!("{e}"))
         .unwrap();
 
-    assert_eq!(0, config.verbose_level);
+    assert_eq!(VerboseLevel::Critical, config.verbose_level);
     assert!(!config.dry_run);
 }
