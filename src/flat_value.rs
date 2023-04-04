@@ -76,3 +76,59 @@ impl From<bool> for FlatValue {
         Self::Boolean(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // FlatValue has to implement From<isize>
+    #[test]
+    fn from_isize() {
+        let value: FlatValue = 2_isize.into();
+
+        assert!(matches!(value, FlatValue::Integer(v) if v == 2));
+    }
+
+    // FlatValue has to implement From<&str>
+    #[test]
+    fn from_str() {
+        let value: FlatValue = "whatever".into();
+
+        assert!(matches!(value, FlatValue::Text(v) if v == "whatever".to_string()));
+    }
+
+    // FlatValue has to implement From<bool>
+    #[test]
+    fn from_bool() {
+        let value: FlatValue = true.into();
+
+        assert!(matches!(value, FlatValue::Boolean(v) if v));
+    }
+
+    // TryUnwrap for FlatValue::Integer
+    #[test]
+    fn try_unwrap_isize() {
+        let value: FlatValue = 2_isize.into();
+
+        assert_eq!(2_isize, value.try_unwrap().unwrap())
+    }
+
+    // TryUnwrap for FlatValue::Text
+    #[test]
+    fn try_unwrap_text() {
+        let value: FlatValue = "whatever".into();
+        let original: String = value.try_unwrap().unwrap();
+
+        assert_eq!("whatever".to_string(), original)
+    }
+
+    // TryUnwrap for FlatValue::Boolean
+    #[test]
+    fn try_unwrap_boo() {
+        let value: FlatValue = true.into();
+
+        let original: bool = value.try_unwrap().unwrap();
+
+        assert!(original)
+    }
+}
