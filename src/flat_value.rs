@@ -1,13 +1,13 @@
-use crate::error::ConfigError;
+use crate::ConfigError;
 
 #[derive(Debug, Clone)]
-pub enum ConfigSetting {
+pub enum FlatValue {
     Integer(isize),
     Text(String),
     Boolean(bool),
 }
 
-impl ConfigSetting {
+impl FlatValue {
     fn display(&self) -> String {
         let subtype: &str = match self {
             Self::Integer(_) => "integer",
@@ -23,7 +23,7 @@ pub trait TryUnwrap<T> {
     fn try_unwrap(&self) -> Result<T, ConfigError>;
 }
 
-impl TryUnwrap<isize> for ConfigSetting {
+impl TryUnwrap<isize> for FlatValue {
     fn try_unwrap(&self) -> Result<isize, ConfigError> {
         match self {
             Self::Integer(i) => Ok(*i),
@@ -35,7 +35,7 @@ impl TryUnwrap<isize> for ConfigSetting {
     }
 }
 
-impl TryUnwrap<String> for ConfigSetting {
+impl TryUnwrap<String> for FlatValue {
     fn try_unwrap(&self) -> Result<String, ConfigError> {
         match self {
             Self::Text(t) => Ok(t.to_string()),
@@ -47,7 +47,7 @@ impl TryUnwrap<String> for ConfigSetting {
     }
 }
 
-impl TryUnwrap<bool> for ConfigSetting {
+impl TryUnwrap<bool> for FlatValue {
     fn try_unwrap(&self) -> Result<bool, ConfigError> {
         match self {
             Self::Boolean(b) => Ok(*b),
@@ -59,19 +59,19 @@ impl TryUnwrap<bool> for ConfigSetting {
     }
 }
 
-impl From<isize> for ConfigSetting {
+impl From<isize> for FlatValue {
     fn from(value: isize) -> Self {
         Self::Integer(value)
     }
 }
 
-impl From<&str> for ConfigSetting {
+impl From<&str> for FlatValue {
     fn from(value: &str) -> Self {
         Self::Text(value.to_string())
     }
 }
 
-impl From<bool> for ConfigSetting {
+impl From<bool> for FlatValue {
     fn from(value: bool) -> Self {
         Self::Boolean(value)
     }

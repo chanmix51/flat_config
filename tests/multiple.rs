@@ -1,7 +1,4 @@
-use flat_config::{
-    error::ConfigError,
-    setting_pool::{ConfigBuilder, ConfigSettingPool},
-};
+use flat_config::{ConfigBuilder, ConfigError, FlatPool};
 
 #[derive(Clone, Debug, PartialEq)]
 struct ConfigA {
@@ -17,7 +14,7 @@ struct ConfigB {
 struct AppConfigBuilder;
 
 impl ConfigBuilder<ConfigA> for AppConfigBuilder {
-    fn build(&self, _config_pool: &ConfigSettingPool) -> Result<ConfigA, ConfigError> {
+    fn build(&self, _config_pool: &FlatPool) -> Result<ConfigA, ConfigError> {
         let config = ConfigA { something: 1 };
 
         Ok(config)
@@ -25,7 +22,7 @@ impl ConfigBuilder<ConfigA> for AppConfigBuilder {
 }
 
 impl ConfigBuilder<ConfigB> for AppConfigBuilder {
-    fn build(&self, _config_pool: &ConfigSettingPool) -> Result<ConfigB, ConfigError> {
+    fn build(&self, _config_pool: &FlatPool) -> Result<ConfigB, ConfigError> {
         let config = ConfigB {
             something_else: "pika".to_string(),
         };
@@ -37,8 +34,8 @@ impl ConfigBuilder<ConfigB> for AppConfigBuilder {
 #[test]
 fn both_config() {
     let builder = AppConfigBuilder::default();
-    let config_a: ConfigA = builder.build(&ConfigSettingPool::default()).unwrap();
-    let config_b: ConfigB = builder.build(&ConfigSettingPool::default()).unwrap();
+    let config_a: ConfigA = builder.build(&FlatPool::default()).unwrap();
+    let config_b: ConfigB = builder.build(&FlatPool::default()).unwrap();
 
     assert_eq!(ConfigA { something: 1 }, config_a);
     assert_eq!(

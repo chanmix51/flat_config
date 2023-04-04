@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 
-use flat_config::{
-    config_setting::TryUnwrap,
-    error::ConfigError,
-    setting_pool::{ConfigBuilder, ConfigSettingPool},
-};
+use flat_config::{ConfigBuilder, ConfigError, FlatPool, TryUnwrap};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum VerboseLevel {
@@ -44,7 +40,7 @@ struct AppConfiguration {
 struct AppConfigBuilder;
 
 impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
-    fn build(&self, config_pool: &ConfigSettingPool) -> Result<AppConfiguration, ConfigError> {
+    fn build(&self, config_pool: &FlatPool) -> Result<AppConfiguration, ConfigError> {
         // Application name has been already checked for existence and consistency
         let app_name = config_pool.unwrap("app_name").try_unwrap()?;
 
@@ -69,7 +65,7 @@ impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
 
 #[test]
 fn build() {
-    let mut pool = ConfigSettingPool::default();
+    let mut pool = FlatPool::default();
     pool.add("whatever", "something".into())
         .add("app_name", "Application".into())
         .add("database_dir", "/var/database".into())
@@ -92,7 +88,7 @@ fn build() {
 #[test]
 #[should_panic]
 fn require() {
-    let mut pool = ConfigSettingPool::default();
+    let mut pool = FlatPool::default();
     pool.add("verbose_level", 2.into())
         .add("app_name", "Application".into())
         .add("dry_run", true.into());
@@ -102,7 +98,7 @@ fn require() {
 #[test]
 #[should_panic]
 fn unwrap() {
-    let mut pool = ConfigSettingPool::default();
+    let mut pool = FlatPool::default();
     pool.add("verbose_level", 2.into())
         .add("database_dir", "/var/database".into())
         .add("dry_run", true.into());
@@ -111,7 +107,7 @@ fn unwrap() {
 
 #[test]
 fn default() {
-    let mut pool = ConfigSettingPool::default();
+    let mut pool = FlatPool::default();
     pool.add("whatever", "something".into())
         .add("app_name", "Application".into())
         .add("database_dir", "/var/database".into());
