@@ -1,6 +1,6 @@
 use crate::ConfigError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FlatValue {
     Integer(isize),
     Text(String),

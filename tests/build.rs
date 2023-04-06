@@ -12,7 +12,7 @@ pub enum VerboseLevel {
 }
 
 impl TryFrom<isize> for VerboseLevel {
-    type Error = ConfigError;
+    type Error = String;
 
     fn try_from(value: isize) -> Result<Self, <Self as TryFrom<isize>>::Error> {
         match value {
@@ -20,10 +20,8 @@ impl TryFrom<isize> for VerboseLevel {
             1 => Ok(Self::Error),
             2 => Ok(Self::Warning),
             3 => Ok(Self::Info),
-            4 => Ok(Self::Debug),
-            v => Err(ConfigError::IncorrectValue(format!(
-                "Incorrect value {v} for type VerboseLevel (1 → 5)"
-            ))),
+            v if v >= 4 => Ok(Self::Debug),
+            v => Err(format!("invalid verbose level: {v}.")),
         }
     }
 }
@@ -48,7 +46,8 @@ impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
         let database_dir = PathBuf::new().join(database_dir);
 
         let verbose_level: isize = config_pool.get_or("verbose_level", 0.into()).try_unwrap()?;
-        let verbose_level = VerboseLevel::try_from(verbose_level)?;
+        let verbose_level = VerboseLevel::try_from(verbose_level)
+            .map_err(|_| panic!("Negative verbose_level {verbose_level} shall never occure."))?;
 
         let dry_run = config_pool.get_or("dry_run", false.into()).try_unwrap()?;
 

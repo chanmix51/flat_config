@@ -6,13 +6,7 @@ use crate::{ConfigError, FlatPool};
 /// [ConfigSettingPool].
 ///
 /// ```rust
-/// use flat_config::{
-///    config_builder::ConfigBuilder,
-///    config_setting::{TryUnwrap, ConfigSetting},
-///    error::ConfigError,
-///    setting_pool::{ConfigSettingPool},
-/// };
-///
+/// use flat_config::{ConfigBuilder, TryUnwrap, FlatValue, ConfigError, FlatPool};
 ///
 /// pub struct MyConfig {
 ///   setting_a: isize,
@@ -26,7 +20,7 @@ use crate::{ConfigError, FlatPool};
 ///     fn build(&self, config_pool: &FlatPool) -> Result<MyConfig, ConfigError> {
 ///         let setting_a: isize = config_pool.require("setting_a")?.try_unwrap()?;
 ///         let setting_b: String = config_pool
-///             .get_or("setting_b", ConfigSetting::Text("something".to_string()))
+///             .get_or("setting_b", FlatValue::Text("something".to_string()))
 ///             .try_unwrap()?;
 ///         let setting_c: Option<bool> = config_pool.get("setting_c").map(|v| v.try_unwrap().unwrap());
 ///

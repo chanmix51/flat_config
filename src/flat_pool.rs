@@ -18,8 +18,13 @@ impl FlatPool {
         self
     }
 
-    /// Read a value from the pool if present.
-    pub fn get(&self, name: &str) -> Option<&FlatValue> {
+    /// Return a cloned value if present.
+    pub fn get(&self, name: &str) -> Option<FlatValue> {
+        self.settings.get(name).cloned()
+    }
+
+    /// Get a borrowed value from the pool if present.
+    pub fn get_borrow(&self, name: &str) -> Option<&FlatValue> {
         self.settings.get(name)
     }
 
@@ -27,7 +32,6 @@ impl FlatPool {
     /// the configuration. The returned value is cloned from the original in the pool.
     pub fn require(&self, name: &str) -> Result<FlatValue, ConfigError> {
         self.get(name)
-            .cloned()
             .ok_or_else(|| ConfigError::Missing(name.to_string()))
     }
 
@@ -42,7 +46,7 @@ impl FlatPool {
 
     /// Get a value from the pool, if not present it returns the provided default value.
     pub fn get_or(&self, name: &str, default: FlatValue) -> FlatValue {
-        self.get(name).cloned().unwrap_or(default)
+        self.get(name).unwrap_or(default)
     }
 
     /// Is this field present in the pool?
@@ -52,4 +56,138 @@ impl FlatPool {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_settings() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert_eq!(3, pool.settings.len());
+        assert_eq!(
+            &FlatValue::Text("thing_a".to_string()),
+            pool.settings.get("thing_a").unwrap()
+        );
+        assert_eq!(
+            &FlatValue::Integer(2_isize),
+            pool.settings.get("how_much").unwrap()
+        );
+        assert_eq!(
+            &FlatValue::Boolean(true),
+            pool.settings.get("is_real").unwrap()
+        )
+    }
+
+    #[test]
+    fn get_borrow() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert_eq!(
+            Some(&FlatValue::Text("thing_a".to_string())),
+            pool.get_borrow("thing_a")
+        );
+        assert_eq!(
+            Some(&FlatValue::Integer(2_isize)),
+            pool.get_borrow("how_much")
+        );
+        assert_eq!(Some(&FlatValue::Boolean(true)), pool.get_borrow("is_real"));
+        assert_eq!(None, pool.get_borrow("unexistent"));
+    }
+
+    #[test]
+    fn get_settings() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert_eq!(
+            Some(FlatValue::Text("thing_a".to_string())),
+            pool.get("thing_a")
+        );
+        assert_eq!(Some(FlatValue::Integer(2_isize)), pool.get("how_much"));
+        assert_eq!(Some(FlatValue::Boolean(true)), pool.get("is_real"));
+        assert_eq!(None, pool.get("unexistent"));
+    }
+
+    #[test]
+    fn get_or_default() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert_eq!(
+            FlatValue::Text("thing_a".to_string()),
+            pool.get_or("thing_a", "nope".into())
+        );
+        assert_eq!(
+            FlatValue::Integer(2_isize),
+            pool.get_or("how_much", 0.into())
+        );
+        assert_eq!(
+            FlatValue::Boolean(true),
+            pool.get_or("is_real", false.into())
+        );
+        assert_eq!(
+            FlatValue::Text("existing".to_string()),
+            pool.get_or("unexistent", "existing".into())
+        );
+    }
+
+    #[test]
+    fn require() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        let result = pool.require("thing_a");
+        assert!(result.is_ok());
+        assert_eq!(FlatValue::Text("thing_a".to_string()), result.unwrap());
+
+        let result = pool.require("unexistent");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn unwrap_ok() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert_eq!(
+            FlatValue::Text("thing_a".to_string()),
+            pool.unwrap("thing_a")
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn unwrap_panic() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        pool.unwrap("unexistent");
+    }
+
+    #[test]
+    fn exist() {
+        let mut pool = FlatPool::default();
+        pool.add("thing_a", "thing_a".into())
+            .add("how_much", 2.into())
+            .add("is_real", true.into());
+
+        assert!(pool.has("thing_a"));
+        assert!(!pool.has("unexistent"));
+    }
+}
