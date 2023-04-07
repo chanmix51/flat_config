@@ -1,4 +1,4 @@
-use crate::{ConfigError, FlatPool};
+use crate::{pool::FlatPool, ConfigError};
 
 /// ### Configuration builder trait.
 ///
@@ -6,7 +6,8 @@ use crate::{ConfigError, FlatPool};
 /// [ConfigSettingPool].
 ///
 /// ```rust
-/// use flat_config::{ConfigBuilder, TryUnwrap, FlatValue, ConfigError, FlatPool};
+/// use flat_config::{ConfigBuilder, TryUnwrap, FlatValue, ConfigError,
+///     pool::{SimpleFlatPool, FlatPool}};
 ///
 /// pub struct MyConfig {
 ///   setting_a: isize,
@@ -17,7 +18,7 @@ use crate::{ConfigError, FlatPool};
 /// pub struct MyConfigBuilder;
 ///
 /// impl ConfigBuilder<MyConfig> for MyConfigBuilder {
-///     fn build(&self, config_pool: &FlatPool) -> Result<MyConfig, ConfigError> {
+///     fn build(&self, config_pool: &impl FlatPool) -> Result<MyConfig, ConfigError> {
 ///         let setting_a: isize = config_pool.require("setting_a")?.try_unwrap()?;
 ///         let setting_b: String = config_pool
 ///             .get_or("setting_b", FlatValue::Text("something".to_string()))
@@ -29,5 +30,5 @@ use crate::{ConfigError, FlatPool};
 /// }
 /// ```
 pub trait ConfigBuilder<T> {
-    fn build(&self, config_pool: &FlatPool) -> Result<T, ConfigError>;
+    fn build(&self, config_pool: &impl FlatPool) -> Result<T, ConfigError>;
 }
