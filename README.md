@@ -42,7 +42,21 @@ impl ConfigBuilder<MyConfig> for MyConfigBuilder {
 }
 ```
 
-In more complex configuration setups, it may be several sources of data with a notion of precedence. In most general cases it is like the following: 
+Now, just grab the configuration settings and build the configuration instance from them:
+
+```rust
+    let mut pool = SimpleFlatPool::default();
+    pool.add("setting_a", 200.into())
+        .add("setting_c", None);
+    let config = AppConfigBuilder::default()
+        .build(&pool)
+        .map_err(|e| format!("{e}"))
+        .unwrap();
+
+    assert_eq!("something".to_string(), config.setting_b);
+```
+
+In more complex configuration setups, there may be several sources of data with a notion of precedence. In most general cases it is like the following: 
 
 >   hard coded default settings < configuration file settings < environment settings < command line parameters settings
 
@@ -51,23 +65,22 @@ FlatConfig achieves this by grouping several simple flat pools with a priority o
 ```rust
 // ↓ This could be the configuration settings read from a config file ↓
 let mut default_pool = SimpleFlatPool::default();
-default_pool
+file_pool
     .add("database_dir", "/var/database".into())
     .add("start_epoch", 0.into())
     .add("dry_run", false.into());
 
-// ↓ This could be the configuration settings read from The environment
+// ↓ This could be the configuration settings read from command line parameters
 let mut file_pool = SimpleFlatPool::default();
-file_pool
+parameter_pool
     .add("database_dir", "/alternate/dir".into())
     .add("app_name", "whatever".into())
     .add("start_epoch", 3.into());
 
-// The order of the flat pools defines the precedence ↓
-let config_pool = LayeredFlatPool::new(vec![Box::new(default_pool), Box::new(file_pool)]);
+// The order of the flat pools in the vector defines the precedence ↓
+let config_pool = LayeredFlatPool::new(vec![Box::new(file_pool), Box::new(parameter_pool)]);
 let config = AppConfigBuilder::default().build(&config_pool).unwrap();
 
-assert_eq!("whatever".to_string(), config.app_name);
-assert_eq!(PathBuf::new().join("/alternate/dir"), config.database_dir);
-
+assert!(!config.dry_run);
+assert_eq!(3, config.start_epoch);
 ```
