@@ -41,7 +41,7 @@ impl ConfigBuilder<AppConfiguration> for AppConfigBuilder {
 
 #[test]
 fn build_layered_pool() {
-    // This could be the hard coded default config values for the application.
+    // This could be the hard coded shared default config values for the application.
     let mut default_pool = SimpleFlatPool::default();
     default_pool
         .add("database_dir", "/var/database".into())
@@ -59,4 +59,5 @@ fn build_layered_pool() {
     let config = AppConfigBuilder::default().build(&config_pool).unwrap();
 
     assert_eq!("whatever".to_string(), config.app_name);
+    assert_eq!(PathBuf::new().join("/alternate/dir"), config.database_dir);
 }
