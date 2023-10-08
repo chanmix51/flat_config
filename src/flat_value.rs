@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::ConfigError;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,6 +18,16 @@ impl FlatValue {
         };
 
         subtype.to_string()
+    }
+}
+
+impl Display for FlatValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Integer(i) => write!(f, "Integer: ({i})"),
+            Self::Text(t) => write!(f, "Text: '{t}'"),
+            Self::Boolean(b) => write!(f, "Boolean: {}", if *b { "True" } else { "False" }),
+        }
     }
 }
 
