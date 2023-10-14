@@ -4,7 +4,7 @@ use crate::{ConfigError, FlatValue};
 ///
 /// A FlatPool is an implementation that can return stored [FlatValue] instances to build
 /// configuration containers.
-pub trait FlatPool {
+pub trait FlatPool: std::fmt::Debug {
     /// Return a cloned value if present.
     fn get(&self, name: &str) -> Option<FlatValue>;
 

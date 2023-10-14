@@ -7,6 +7,7 @@ type Layer = Box<dyn FlatPool>;
 /// ## LayeredFlatPool
 ///
 /// This flat pool can take several sources and use a path to determine which data override others.
+#[derive(Debug)]
 pub struct LayeredFlatPool {
     layers: Vec<Layer>,
 }
