@@ -3,7 +3,7 @@ use std::{error::Error, fmt::Display};
 #[derive(Debug)]
 pub enum ConfigError {
     /// Configuration setting named is missing.
-    Missing(String),
+    Missing { field_name: String, fields: String },
 
     /// Type mismatch
     TypeMismatch { expected: String, present: String },
@@ -16,7 +16,7 @@ pub enum ConfigError {
 impl Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Missing(field) => write!(f, "CONFIGURATION ERROR: Field '{field}' is missing."),
+            Self::Missing { field_name, fields } => write!(f, "CONFIGURATION ERROR: Field '{field_name}' is missing. Available fields are: '{fields}'."),
             Self::TypeMismatch { expected, present } => {
                 write!(
                     f,

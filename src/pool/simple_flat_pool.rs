@@ -35,8 +35,10 @@ impl FlatPool for SimpleFlatPool {
     /// Require the field to be present or return an error. This will prevent the builder to create
     /// the configuration. The returned value is cloned from the original in the pool.
     fn require(&self, name: &str) -> Result<FlatValue, ConfigError> {
-        self.get(name)
-            .ok_or_else(|| ConfigError::Missing(name.to_string()))
+        self.get(name).ok_or_else(|| ConfigError::Missing {
+            field_name: name.to_string(),
+            fields: format!("{self:?}"),
+        })
     }
 
     /// Like require but panic when not present. Use this method when you know the given field is

@@ -36,8 +36,10 @@ impl FlatPool for LayeredFlatPool {
     }
 
     fn require(&self, name: &str) -> Result<FlatValue, ConfigError> {
-        self.get(name)
-            .ok_or_else(|| ConfigError::Missing(name.to_string()))
+        self.get(name).ok_or_else(|| ConfigError::Missing {
+            field_name: name.to_string(),
+            fields: format!("{self:?}"),
+        })
     }
 
     fn get_borrow(&self, name: &str) -> Option<&FlatValue> {
